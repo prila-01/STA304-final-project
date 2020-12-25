@@ -1,0 +1,127 @@
+---
+title: "Multiple Linear Regression Approach on Primary Factors in Toronto Fire Incidents Financial Loss"
+author: "Meiwen Ding, Id 1005119863"
+  output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+date: "December 6, 2020"
+---
+
+```{r setup, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+|    Toronto has the most population as a city in Canada. Because of the large population density in the downtown area, fire incidents can be extremely dangerous to the general public. This analysis paper will look into the factors of fire incidents happened in the GTA in 2019, and build relationship between the financial loss and multiple explanatory variables such as responding apparatus, casualties of firefighters, etc. The dataset we will be using is from the Toronto Open Data Portal. This will be a more in depth study of Problem Set 1.
+
+|    The main approach for this analysis is to establish a multi-linear regression model based on the dataset. The method is considered an extension of a simple linear regression model, by having more than one explanatory variables for the dependent variable. In this case, we want to find out the primary factors that are associated with financial loss in fire accidents. In addition, the fitness of this model will be assessed by giving a look into the corresponding coefficients. 
+
+|    The only dataset used in this report is the fire incidents data.csv from the Toronto Open Data Portal. In the Method section, a specific description of the modelling will be presented. I will also summarize the data cleaning and simulation procedures. Results of the multi-linear regression will be displayed in the Results section, along with graphs that help the audience to comprehend. Finally, in the Discussion section, I will make summary and conclusion of the entire report, and discuss possible shortcomings and improvements to take in the future.
+
+
+```{r echo=FALSE warning=FALSE }
+#install.packages("opendatatoronto") 
+#install.packages("devtools")
+#devtools::install_github("sharlagelfand/opendatatoronto") #; or
+#devtools::install_github("hodgettsp/cesR")
+
+library(opendatatoronto)
+library(cesR)
+
+library(tidyverse)
+library(visdat)
+library(skimr)
+
+data_fire <- readr::read_csv(
+  file = "fire incidents data.csv")
+data_o=na.omit(data_fire)
+```
+
+
+
+## Abstract
+
+This project aims to find predictors for Toronto fire incidents. We will explore how  1. number of responding apparatus, 2. number of responding personnel, and 3. TFS firefighter casualties, these predictors can predict estimated dollar loss.
+
+
+
+## Keywords
+
+Multi linear regression, fire incidents, financial loss, number of responding apparatus, number of responding personnel, TFS firefighter casualties.
+
+
+
+## Methodology
+
+The original dataset is obtained from the Toronto Open Data Portal. According to their website, "this dataset provides information similar to what is sent to the Ontario Fire Marshal relating to only fire Incidents to which Toronto Fire responds in more detail than the dataset including all incident types". This analysis will pick the following variables for the MLR model:  Estimated_Dollar_Loss,  Number_of_responding_apparatus, Number_of_responding_personnel, and TFS_Firefighter_Casualties.
+Here is a table that shows every variable we will make analysis on, as mentioned before. The NA values have been cleared from the original dataset, and all of the variables are numerical. 
+```{r echo=FALSE warning=FALSE }
+attach(data_o)
+data_ok=select(data_o,Estimated_Dollar_Loss,Number_of_responding_apparatus,Number_of_responding_personnel,TFS_Firefighter_Casualties )
+data_ok
+```
+
+
+
+We will use a MLR model with estimated dollar loss as the response variable and estimated number of persons displaced,  number of responding apparatus, number of responding personnel, and TFS firefighter casualties as the explanatory variables. For firefighter casualties, there are only four categories: 1, 2, 3, 4. Thus, we will use dummy variable coding here for them as one explanatory variable with four categories. The beta coefficients measure the association between the predictor variable and the outcome. The MLR model we use:
+
+
+
+$$
+Estimated Dollar Loss=\hat{β0}+\hat{β1} apparatus+\hat{β2} personnel+\hat{β3} firefighter1+\hat{β4} firefighter2+\hat{β5} firefighter3+\hat{β6} firefighter4
+$$
+
+ Each coefficient represent on average, how much of an increase in the response variable is caused by one unit increase of the exploratory.
+
+
+
+## Results
+
+```{r echo=FALSE warning=FALSE }
+
+model <- lm(Estimated_Dollar_Loss ~  Estimated_Number_Of_Persons_Displaced + Number_of_responding_apparatus+Number_of_responding_personnel+as.factor(TFS_Firefighter_Casualties), data = data_o)
+summary(model)
+```
+
+
+
+
+
+However, most of the explanatory variables have a significant p-value (<0.05), thus, changes in the estimated number of responding apparatus/personnels will not significantly affect estimated dollar loss in fire incidents. When the number of firefighter casualties is one, the result is significant and suggests a negative correlation between firefighter casualties and estimated dollar loss.
+
+
+
+
+## Discussion
+
+In this analysis, we performed a MLR model to predict the explanatory variables for estimated dollar loss in Toronto fire incidents. We found that p-values of  number of responding apparatus/personnels, category 2,3,4 of firefighter casualties are not significant enough to predict the estimated dollar loss in the fire incidents. When the casualty of firefighter is one, there is a negative correlation bwteen it and the estimated dollar loss.
+
+
+Here are four scatterplots to help intepret such insignificant results. We can tell that the plots for firefighter casualties do not show a linear pattern with estimated dollar loss. The rest of the two plots have weak positive associations as well. This might account for the reason why our MLR model does not have statistically significant results.
+
+
+To improve the results, we could try removing some outliers, or using a logistic model for the discrete variables (count of people/casualties). This also gives insight to another possible analysis on this dataset, that is to predict factors that influence the civilian casulties in the fire incidents.
+
+
+```{r echo=FALSE}
+par(mfrow=c(2,2))
+data_o %>% 
+  ggplot( aes(x=Number_of_responding_personnel, y=Estimated_Dollar_Loss)) +geom_point()+
+    geom_smooth(method=lm)  + labs(subtitle="Scatterplot of number of responding personnels and estimated dollar loss of the fire incidents")
+
+data_o %>%
+  ggplot( aes(x=Number_of_responding_apparatus, y=Estimated_Dollar_Loss)) +geom_point()+
+    geom_smooth(method=lm)  + labs(subtitle="Scatterplot of number of responding apparatus and estimated dollar loss of the fire incidents")
+data_o %>%
+  ggplot( aes(x=TFS_Firefighter_Casualties, y=Estimated_Dollar_Loss)) +geom_point()+
+    geom_smooth(method=lm)  + labs(subtitle="Scatterplot of number of TFS firefighter casualties and estimated dollar loss of the fire incidents")
+```
+
+
+
+
+## References
+
+Services, Fire. “Open Data Dataset.” City of Toronto Open Data Portal, open.toronto.ca/dataset/fire-incidents/. 
